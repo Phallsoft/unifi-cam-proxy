@@ -17,6 +17,7 @@ from pkg_resources import packaging
 
 
 import aiohttp
+from unifi.cams.custom import CustomCam
 import websockets
 from unifi.core import RetryableError
 
@@ -929,6 +930,10 @@ class UnifiCamBase(metaclass=ABCMeta):
         # if stream_index == 'video1' and not has_spawned or is_dead:
         if not has_spawned or is_dead:
             source = await self.get_stream_source(stream_index)
+
+            self.logger.info(
+                f"Building ffmpeg command for {stream_index} ({stream_name})..."
+            )
             cmd = (
                 f"ffmpeg -nostdin -loglevel error -y {self.get_base_ffmpeg_args(stream_index)}"
                 f" -rtsp_transport {self.args.rtsp_transport}"
@@ -937,6 +942,18 @@ class UnifiCamBase(metaclass=ABCMeta):
                 f" | {sys.executable} -m unifi.clock_sync {'--write-timestamps' if self._needs_flv_timestamps else ''}"
                 f" | nc {destination[0]} {destination[1]}"
             )
+
+            if isinstance(self, CustomCam):
+                self.logger.info(
+                    f"CustomCam detected! Using modified command"
+                )
+                cmd = (
+                    f"ffmpeg -nostdin -loglevel error -y {self.get_base_ffmpeg_args(stream_index)}"
+                    f' -i "{source}" {self.get_extra_ffmpeg_args(stream_index)}'
+                    f" -metadata streamName={stream_name} -f flv -"
+                    f" | {sys.executable} -m unifi.clock_sync {'--write-timestamps' if self._needs_flv_timestamps else ''}"
+                    f" | nc {destination[0]} {destination[1]}"
+                )
 
             if is_dead:
                 self.logger.warn(f"Previous ffmpeg process for {stream_index} died.")

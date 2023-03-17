@@ -9,7 +9,7 @@ from aiohttp import web
 from unifi.cams.base import UnifiCamBase
 
 
-class RTSPCam(UnifiCamBase):
+class CustomCam(UnifiCamBase):
     def __init__(self, args: argparse.Namespace, logger: logging.Logger) -> None:
         super().__init__(args, logger)
         self.args = args
@@ -53,7 +53,7 @@ class RTSPCam(UnifiCamBase):
     def start_snapshot_stream(self) -> None:
         if not self.snapshot_stream or self.snapshot_stream.poll() is not None:
             cmd = (
-                f"ffmpeg -nostdin -y -re -rtsp_transport {self.args.rtsp_transport} "
+                f"ffmpeg -nostdin -y -re "
                 f'-i "{self.args.source[-1]}" '
                 "-r 1 "
                 f"-update 1 {self.snapshot_dir}/screen.jpg"
