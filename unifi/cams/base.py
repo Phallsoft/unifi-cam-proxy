@@ -930,7 +930,8 @@ class UnifiCamBase(metaclass=ABCMeta):
         # if stream_index == 'video1' and not has_spawned or is_dead:
         if not has_spawned or is_dead:
             source = await self.get_stream_source(stream_index)
-
+            from unifi.cams.custom import CustomCam
+            
             self.logger.info(
                 f"Building ffmpeg command for {stream_index} ({stream_name})..."
             )
